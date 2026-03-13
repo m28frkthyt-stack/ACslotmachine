@@ -263,21 +263,43 @@ status_class = "status-positive" if st.session_state.status_tone == "positive" e
 # -----------------------------
 # UI
 # -----------------------------
-left, right = st.columns([1.3, 0.9], gap="large")
 
-with left:
-    st.markdown('<div class="big-title">Inverse Cancel Casino</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="subtitle">Spin by wagering 1 cancel token. In this backwards casino, losing still costs you extra, but winning is even worse.</div>',
-        unsafe_allow_html=True,
-    )
+st.markdown(
+    """
+    <div class="hero">
+        <div class="big-title">Inverse Cancel Casino</div>
+        <div class="subtitle">
+        A backwards casino game. You start with cancel tokens.
+        <br><br>
+        <strong>If you LOSE:</strong> the dealer gives you tokens (+2).
+        <br>
+        <strong>If you WIN:</strong> you are allowed to GIVE tokens to the dealer.
+        The better the win, the more tokens you must give.
+        </div>
+        <div class="rules">
+            <div class="rule"><strong>Spin cost:</strong> you wager 1 cancel token.</div>
+            <div class="rule"><strong>Lose:</strong> dealer gives you +1 extra token (so you gain tokens).</div>
+            <div class="rule"><strong>Win:</strong> you must give the dealer extra tokens depending on the prize.</div>
+        </div>
+        <div class="tiny-brand">vibe coded by ac-team</div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# Center the slot machine
+left, center, right = st.columns([1,2,1])
+
+with center:
 
     st.markdown(
         f'''
-        <div class="reel-wrap">
-            <div class="reel">{st.session_state.reels[0]}</div>
-            <div class="reel">{st.session_state.reels[1]}</div>
-            <div class="reel">{st.session_state.reels[2]}</div>
+        <div class="machine-shell">
+            <div class="reel-wrap">
+                <div class="reel">{st.session_state.reels[0]}</div>
+                <div class="reel">{st.session_state.reels[1]}</div>
+                <div class="reel">{st.session_state.reels[2]}</div>
+            </div>
         </div>
         ''',
         unsafe_allow_html=True,
@@ -293,60 +315,34 @@ with left:
         unsafe_allow_html=True,
     )
 
-    a, b = st.columns([1, 1])
-    with a:
-        st.button("🎰 Wager 1 token", use_container_width=True, on_click=spin_machine)
-    with b:
+    score_col1, score_col2 = st.columns(2)
+
+    with score_col1:
+        st.markdown(
+            f"""
+            <div class="score-pill">
+            Tokens: <span class="score-big">{st.session_state.tokens}</span>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with score_col2:
+        st.markdown(
+            f"""
+            <div class="score-pill">
+            Spins: <span class="score-big">{st.session_state.spins}</span>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    b1, b2 = st.columns(2)
+
+    with b1:
+        st.button("🎰 Spin", use_container_width=True, on_click=spin_machine)
+
+    with b2:
         st.button("↺ Reset", use_container_width=True, on_click=reset_game)
 
-with right:
-    st.subheader("Scoreboard")
-    s1, s2 = st.columns(2)
-    s3, s4 = st.columns(2)
-
-    with s1:
-        st.markdown(f'<div class="score-card"><div class="score-label">Tokens left</div><div class="score-value">{st.session_state.tokens}</div></div>', unsafe_allow_html=True)
-    with s2:
-        st.markdown(f'<div class="score-card"><div class="score-label">Spins</div><div class="score-value">{st.session_state.spins}</div></div>', unsafe_allow_html=True)
-    with s3:
-        st.markdown(f'<div class="score-card"><div class="score-label">Tokens removed</div><div class="score-value">{total_removed}</div></div>', unsafe_allow_html=True)
-    with s4:
-        st.markdown(f'<div class="score-card"><div class="score-label">Jackpots</div><div class="score-value">{jackpots}</div></div>', unsafe_allow_html=True)
-
-    st.subheader("Prize table")
-    for outcome in OUTCOMES:
-        if outcome["match"]:
-            st.markdown(
-                f'''
-                <div class="mini-card">
-                    <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
-                        <strong>{outcome["label"]}</strong>
-                        <span>+{1 + outcome["extra_loss"]} removed</span>
-                    </div>
-                    <div class="history-symbols">{" ".join(outcome["match"])} </div>
-                </div>
-                ''',
-                unsafe_allow_html=True,
-            )
-    st.markdown(
-        '<div class="mini-card"><strong>Loss</strong><div class="tiny">Any other result still removes +2 tokens total.</div></div>',
-        unsafe_allow_html=True,
-    )
-
-    st.subheader("Recent spins")
-    if not st.session_state.history:
-        st.markdown('<div class="history-empty">No spins yet. Suspiciously responsible.</div>', unsafe_allow_html=True)
-    else:
-        for item in st.session_state.history:
-            st.markdown(
-                f'''
-                <div class="mini-card">
-                    <div class="history-symbols">{" ".join(item["reels"])} </div>
-                    <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
-                        <span>{item["label"]}</span>
-                        <strong>+{item["removed"]} removed</strong>
-                    </div>
-                </div>
-                ''',
-                unsafe_allow_html=True,
-            )
+st.markdown('<div class="footer-note">AC-team experimental casino interface</div>', unsafe_allow_html=True)
