@@ -3,4 +3,4 @@ services:
     name: inverse-cancel-casino
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0
+    startCommand: streamlit run accasino.py --server.port $PORT --server.address 0.0.0.0
