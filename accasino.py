@@ -259,24 +259,38 @@ st.markdown(
 def spin_machine():
     outcome = pick_weighted_outcome()
 
-    placeholder = st.empty()
-    for _ in range(10):
-        temp = [random_symbol(), random_symbol(), random_symbol()]
-        placeholder.markdown(
+    machine_placeholder = st.empty()
+
+    # Build final result first so the spin animation can converge to it.
+    final_reels = build_reels(outcome)
+
+    # Reel-by-reel slot style animation.
+    spin_frames = 14
+    for frame in range(spin_frames):
+        if frame < 8:
+            current = [random_symbol(), random_symbol(), random_symbol()]
+        elif frame < 10:
+            current = [final_reels[0], random_symbol(), random_symbol()]
+        elif frame < 12:
+            current = [final_reels[0], final_reels[1], random_symbol()]
+        else:
+            current = final_reels
+
+        machine_placeholder.markdown(
             f'''
             <div class="machine-shell">
                 <div class="reel-wrap">
-                    <div class="reel">{temp[0]}</div>
-                    <div class="reel">{temp[1]}</div>
-                    <div class="reel">{temp[2]}</div>
+                    <div class="reel">{current[0]}</div>
+                    <div class="reel">{current[1]}</div>
+                    <div class="reel">{current[2]}</div>
                 </div>
             </div>
             ''',
             unsafe_allow_html=True,
         )
-        time.sleep(0.07)
+        time.sleep(0.08 if frame < 10 else 0.12)
 
-    st.session_state.reels = build_reels(outcome)
+    st.session_state.reels = final_reels
     st.session_state.status = outcome["message"]
     st.session_state.status_tone = outcome["tone"]
 
@@ -327,9 +341,5 @@ with center:
     )
 
     st.button("🎰 Spin the machine", use_container_width=True, on_click=spin_machine)
-
-    reset_left, reset_center, reset_right = st.columns([1, 1, 1])
-    with reset_center:
-        st.button("↺ Reset", use_container_width=True, on_click=reset_game)
 
 st.markdown('<div class="footer-note">AC-team experimental casino interface</div>', unsafe_allow_html=True)
