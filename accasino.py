@@ -17,46 +17,46 @@ OUTCOMES = [
     {
         "id": "jackpot",
         "label": "Jackpot",
-        "weight": 2,
-        "extra_loss": 5,
+        "weight": 4,
+        "dealer_take": 5,
         "match": ["💸", "💸", "💸"],
-        "message": "Jackpot. Extremely unfortunate. +6 tokens removed.",
+        "message": "JACKPOT. You won. Leave your wager in the machine and GIVE 5 extra cancel tokens to the dealer.",
         "tone": "positive",
     },
     {
         "id": "major",
         "label": "Major scandal",
-        "weight": 6,
-        "extra_loss": 3,
+        "weight": 10,
+        "dealer_take": 3,
         "match": ["🛢️", "✈️", "💸"],
-        "message": "Big win, bad life choice. +4 tokens removed.",
+        "message": "You won. Leave your wager in the machine and GIVE 3 extra cancel tokens to the dealer.",
         "tone": "positive",
     },
     {
         "id": "medium",
         "label": "Bad optics",
-        "weight": 12,
-        "extra_loss": 2,
+        "weight": 16,
+        "dealer_take": 2,
         "match": ["🚗", "🥩", "🌍"],
-        "message": "Respectable cancellation. +3 tokens removed.",
+        "message": "You won. Leave your wager in the machine and GIVE 2 extra cancel tokens to the dealer.",
         "tone": "positive",
     },
     {
         "id": "minor",
         "label": "Mild controversy",
         "weight": 20,
-        "extra_loss": 1,
+        "dealer_take": 1,
         "match": ["🍔", "🚬", "🧢"],
-        "message": "Small win. +2 tokens removed.",
+        "message": "You won. Leave your wager in the machine and GIVE 1 extra cancel token to the dealer.",
         "tone": "positive",
     },
     {
         "id": "lose",
         "label": "Loss",
-        "weight": 60,
-        "extra_loss": 1,
+        "weight": 50,
+        "dealer_take": -2,
         "match": None,
-        "message": "You lost. The machine still takes one extra token. +2 tokens removed.",
+        "message": "You lost. Take back the 1 token you placed and grab 1 extra token from the dealer. In total, take 2 tokens from the dealer.",
         "tone": "neutral",
     },
 ]
@@ -87,11 +87,9 @@ def build_reels(outcome):
 
 def init_state():
     defaults = {
-        "tokens": 30,
         "reels": ["❔", "❔", "❔"],
-        "status": "Wager 1 cancel token. Losing costs an extra token, but winning removes even more.",
+        "status": "Place 1 cancel token into the machine to spin. If you lose, take 2 tokens from the dealer. If you win, give extra tokens to the dealer.",
         "status_tone": "neutral",
-        "history": [],
         "spins": 0,
     }
     for key, value in defaults.items():
@@ -105,88 +103,173 @@ def init_state():
 st.markdown(
     """
     <style>
+    .stApp {
+        background:
+            radial-gradient(circle at 18% 0%, rgba(236,72,153,0.18), transparent 28%),
+            radial-gradient(circle at 82% 10%, rgba(59,130,246,0.16), transparent 28%),
+            linear-gradient(180deg, #07070a 0%, #0f172a 100%);
+    }
     .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-        max-width: 1200px;
+        padding-top: 0.8rem;
+        padding-bottom: 1.2rem;
+        max-width: 980px;
+    }
+    .hero {
+        background: linear-gradient(135deg, rgba(255,255,255,0.09), rgba(255,255,255,0.03));
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 28px;
+        padding: 20px 18px 18px 18px;
+        box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+        margin-bottom: 14px;
+        backdrop-filter: blur(12px);
     }
     .big-title {
-        font-size: 3rem;
+        font-size: clamp(2.3rem, 6vw, 3.6rem);
         font-weight: 900;
-        letter-spacing: -0.04em;
-        margin-bottom: 0.25rem;
+        letter-spacing: -0.05em;
+        line-height: 0.95;
+        margin-bottom: 0.4rem;
+        text-align: center;
     }
     .subtitle {
-        color: #9ca3af;
-        margin-bottom: 1rem;
+        color: #dbe4f0;
+        margin: 0 auto 0.7rem auto;
+        line-height: 1.55;
+        max-width: 780px;
+        font-size: 1rem;
+        text-align: center;
+    }
+    .tiny-brand {
+        color: #f9a8d4;
+        font-size: 0.82rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 700;
+        text-align: center;
+        margin-top: 0.45rem;
+    }
+    .rules {
+        margin-top: 0.9rem;
+        display: grid;
+        gap: 10px;
+    }
+    .rule {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.10);
+        border-radius: 18px;
+        padding: 13px 14px;
+        color: #eef2ff;
+        line-height: 1.45;
+        font-size: 0.98rem;
+        text-align: center;
+    }
+    .rule strong { color: white; }
+    .machine-shell {
+        background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+        border: 1px solid rgba(255,255,255,0.14);
+        border-radius: 34px;
+        padding: 18px;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 30px 90px rgba(0,0,0,0.36);
+        margin-bottom: 16px;
     }
     .reel-wrap {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 14px;
-        margin: 1rem 0 1rem 0;
+        gap: 12px;
+        margin: 0.3rem 0 0.15rem 0;
     }
     .reel {
-        background: linear-gradient(180deg, #1f2937, #111827);
-        border: 1px solid #374151;
-        border-radius: 22px;
-        min-height: 150px;
+        background:
+            radial-gradient(circle at 50% 20%, rgba(255,255,255,0.16), transparent 30%),
+            linear-gradient(180deg, #1f2937, #0f172a 70%);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 24px;
+        min-height: 160px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 4rem;
-        box-shadow: inset 0 6px 18px rgba(255,255,255,0.04);
+        font-size: clamp(3.2rem, 9vw, 4.8rem);
+        box-shadow: inset 0 10px 24px rgba(255,255,255,0.05), inset 0 -18px 35px rgba(0,0,0,0.28);
     }
     .status-box {
-        border-radius: 18px;
-        padding: 16px 18px;
-        border: 1px solid #374151;
-        background: #111827;
+        border-radius: 22px;
+        padding: 18px 18px;
+        border: 1px solid rgba(255,255,255,0.10);
+        background: rgba(15,23,42,0.78);
         margin-bottom: 1rem;
+        box-shadow: 0 10px 35px rgba(0,0,0,0.22);
+        text-align: center;
     }
     .status-positive {
-        background: rgba(34, 197, 94, 0.12);
-        border: 1px solid rgba(34, 197, 94, 0.35);
+        background: rgba(34, 197, 94, 0.14);
+        border: 1px solid rgba(34, 197, 94, 0.38);
     }
     .status-neutral {
-        background: rgba(255,255,255,0.04);
-        border: 1px solid #374151;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.12);
     }
     .status-label {
         font-size: 0.75rem;
         text-transform: uppercase;
-        letter-spacing: 0.14em;
-        color: #9ca3af;
-        margin-bottom: 0.35rem;
-        font-weight: 700;
+        letter-spacing: 0.16em;
+        color: #cbd5e1;
+        margin-bottom: 0.4rem;
+        font-weight: 800;
     }
-    .score-card {
-        background: #111827;
-        border: 1px solid #374151;
-        border-radius: 18px;
-        padding: 16px;
+    .score-grid {
+        display:grid;
+        grid-template-columns: 1fr;
+        gap:12px;
+        margin: 0.4rem 0 1rem 0;
+    }
+    .score-pill {
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.10);
+        border-radius: 22px;
+        padding: 12px 14px;
+        color: #f8fafc;
+        font-weight: 700;
+        text-align:center;
     }
     .score-label {
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        color: #9ca3af;
+        font-size:0.78rem;
+        text-transform:uppercase;
+        letter-spacing:0.12em;
+        color:#cbd5e1;
+        margin-bottom:4px;
     }
-    .score-value {
-        font-size: 2rem;
+    .score-big {
+        font-size: clamp(1.8rem, 5vw, 2.5rem);
         font-weight: 900;
-        margin-top: 0.25rem;
+        letter-spacing: -0.05em;
     }
-    .mini-card {
-        background: #111827;
-        border: 1px solid #374151;
-        border-radius: 16px;
-        padding: 14px;
-        margin-bottom: 10px;
+    .stButton > button {
+        border-radius: 20px;
+        min-height: 58px;
+        font-weight: 800;
+        font-size: 1.02rem;
+        border: 1px solid rgba(255,255,255,0.14);
+        background: linear-gradient(180deg, #ffffff, #e5e7eb);
+        color: #111827;
+        box-shadow: 0 14px 30px rgba(0,0,0,0.2);
+        width:100%;
     }
-    .history-symbols {
-        font-size: 1.8rem;
-        margin-bottom: 0.25rem;
+    .footer-note {
+        text-align: center;
+        color: #cbd5e1;
+        font-size: 0.88rem;
+        margin-top: 0.6rem;
+    }
+    @media (max-width: 1024px) {
+        .block-container { max-width: 820px; padding-top: 0.5rem; }
+        .hero { padding: 18px 16px 16px 16px; border-radius: 24px; }
+        .machine-shell { padding: 14px; border-radius: 28px; }
+        .reel { min-height: 132px; border-radius: 20px; }
+        .status-box { padding: 16px 14px; }
+    }
+    @media (max-width: 768px) {
+        .block-container { max-width: 700px; }
+        .reel { min-height: 110px; font-size: clamp(2.6rem, 11vw, 4rem); }
     }
     </style>
     """,
@@ -199,26 +282,21 @@ init_state()
 # Actions
 # -----------------------------
 def spin_machine():
-    if st.session_state.tokens <= 0:
-        st.session_state.status = "No cancel tokens left. Truly healing behavior."
-        st.session_state.status_tone = "neutral"
-        return
-
-    st.session_state.tokens = max(0, st.session_state.tokens - 1)
     st.session_state.spins += 1
 
     outcome = pick_weighted_outcome()
 
-    # fake spin animation
     placeholder = st.empty()
     for _ in range(10):
         temp = [random_symbol(), random_symbol(), random_symbol()]
         placeholder.markdown(
             f'''
-            <div class="reel-wrap">
-                <div class="reel">{temp[0]}</div>
-                <div class="reel">{temp[1]}</div>
-                <div class="reel">{temp[2]}</div>
+            <div class="machine-shell">
+                <div class="reel-wrap">
+                    <div class="reel">{temp[0]}</div>
+                    <div class="reel">{temp[1]}</div>
+                    <div class="reel">{temp[2]}</div>
+                </div>
             </div>
             ''',
             unsafe_allow_html=True,
@@ -228,25 +306,11 @@ def spin_machine():
     final_reels = build_reels(outcome)
     st.session_state.reels = final_reels
 
-    # everybody loses an extra token on a loss, bigger wins remove more
-    extra_loss = outcome["extra_loss"]
-    st.session_state.tokens = max(0, st.session_state.tokens - extra_loss)
-    total_removed = 1 + extra_loss
-
-    st.session_state.status = outcome["message"]
+        st.session_state.status = outcome["message"]
     st.session_state.status_tone = outcome["tone"]
-    st.session_state.history.insert(
-        0,
-        {
-            "reels": final_reels,
-            "label": outcome["label"],
-            "removed": total_removed,
-        },
-    )
-    st.session_state.history = st.session_state.history[:8]
 
 
-def reset_game():
+def reset_game():():
     for key in ["tokens", "reels", "status", "status_tone", "history", "spins"]:
         if key in st.session_state:
             del st.session_state[key]
@@ -269,17 +333,18 @@ st.markdown(
     <div class="hero">
         <div class="big-title">Inverse Cancel Casino</div>
         <div class="subtitle">
-        A backwards casino game. You start with cancel tokens.
+        Place <strong>1 cancel token</strong> into the machine to spin.
         <br><br>
-        <strong>If you LOSE:</strong> the dealer gives you tokens (+2).
+        <strong>If you lose:</strong> take back the token you just placed, and then take <strong>1 extra token</strong> from the dealer.
         <br>
-        <strong>If you WIN:</strong> you are allowed to GIVE tokens to the dealer.
-        The better the win, the more tokens you must give.
+        So after a losing spin, you should physically take <strong>2 tokens total</strong> from the dealer.
+        <br><br>
+        <strong>If you win:</strong> leave your wager in the machine and give <strong>extra tokens</strong> to the dealer, depending on the result.
         </div>
         <div class="rules">
-            <div class="rule"><strong>Spin cost:</strong> you wager 1 cancel token.</div>
-            <div class="rule"><strong>Lose:</strong> dealer gives you +1 extra token (so you gain tokens).</div>
-            <div class="rule"><strong>Win:</strong> you must give the dealer extra tokens depending on the prize.</div>
+            <div class="rule"><strong>Step 1:</strong> put 1 cancel token into the machine.</div>
+            <div class="rule"><strong>Losing spin:</strong> take back your wager and grab 1 extra token from the dealer. <strong>Take 2 tokens total.</strong></div>
+            <div class="rule"><strong>Winning spin:</strong> keep your wager in the machine and give the extra number of tokens shown in the message.</div>
         </div>
         <div class="tiny-brand">vibe coded by ac-team</div>
     </div>
@@ -315,32 +380,22 @@ with center:
         unsafe_allow_html=True,
     )
 
-    score_col1, score_col2 = st.columns(2)
-
-    with score_col1:
-        st.markdown(
-            f"""
+    st.markdown(
+        f"""
+        <div class="score-grid">
             <div class="score-pill">
-            Tokens: <span class="score-big">{st.session_state.tokens}</span>
+                <div class="score-label">Spins</div>
+                <div class="score-big">{st.session_state.spins}</div>
             </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    with score_col2:
-        st.markdown(
-            f"""
-            <div class="score-pill">
-            Spins: <span class="score-big">{st.session_state.spins}</span>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     b1, b2 = st.columns(2)
 
     with b1:
-        st.button("🎰 Spin", use_container_width=True, on_click=spin_machine)
+        st.button("🎰 Spin the machine", use_container_width=True, on_click=spin_machine)
 
     with b2:
         st.button("↺ Reset", use_container_width=True, on_click=reset_game)
