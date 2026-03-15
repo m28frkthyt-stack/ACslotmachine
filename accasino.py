@@ -9,6 +9,12 @@ st.set_page_config(
 )
 
 SYMBOLS = ["🚗", "🥩", "✈️", "🛢️", "🧴", "🍔", "🌍", "💸", "🚬", "🧢"]
+WIN_SYMBOLS = {
+    "jackpot": "💸",
+    "major": "🛢️",
+    "medium": "🌍",
+    "minor": "🧢",
+}
 
 OUTCOMES = [
     {
@@ -16,7 +22,6 @@ OUTCOMES = [
         "label": "Jackpot",
         "weight": 4,
         "dealer_take": 5,
-        "match": ["💸", "💸", "💸"],
         "message": "JACKPOT. You won. Leave your wager in the machine and GIVE 5 extra cancel tokens to the dealer.",
         "tone": "positive",
     },
@@ -25,7 +30,6 @@ OUTCOMES = [
         "label": "Major scandal",
         "weight": 10,
         "dealer_take": 3,
-        "match": ["🛢️", "✈️", "💸"],
         "message": "You won. Leave your wager in the machine and GIVE 3 extra cancel tokens to the dealer.",
         "tone": "positive",
     },
@@ -34,7 +38,6 @@ OUTCOMES = [
         "label": "Bad optics",
         "weight": 16,
         "dealer_take": 2,
-        "match": ["🚗", "🥩", "🌍"],
         "message": "You won. Leave your wager in the machine and GIVE 2 extra cancel tokens to the dealer.",
         "tone": "positive",
     },
@@ -43,7 +46,6 @@ OUTCOMES = [
         "label": "Mild controversy",
         "weight": 20,
         "dealer_take": 1,
-        "match": ["🍔", "🚬", "🧢"],
         "message": "You won. Leave your wager in the machine and GIVE 1 extra cancel token to the dealer.",
         "tone": "positive",
     },
@@ -52,7 +54,6 @@ OUTCOMES = [
         "label": "Loss",
         "weight": 50,
         "dealer_take": -2,
-        "match": None,
         "message": "You lost. Take back the 1 token you placed and grab 1 extra token from the dealer. In total, take 2 tokens from the dealer.",
         "tone": "neutral",
     },
@@ -75,8 +76,9 @@ def random_symbol():
 
 
 def build_reels(outcome):
-    if outcome["match"]:
-        return outcome["match"]
+    if outcome["id"] != "lose":
+        symbol = WIN_SYMBOLS[outcome["id"]]
+        return [symbol, symbol, symbol]
 
     mode = random.choice(["pair_left", "pair_right", "sandwich", "all_diff"])
 
@@ -95,9 +97,8 @@ def build_reels(outcome):
     else:
         reels = random.sample(SYMBOLS, 3)
 
-    winning_matches = {tuple(o["match"]) for o in OUTCOMES if o["match"]}
-    if tuple(reels) in winning_matches:
-        reels = [reels[0], reels[1], random.choice([s for s in SYMBOLS if s not in reels[:2]])]
+    if reels[0] == reels[1] == reels[2]:
+        reels[2] = random.choice([s for s in SYMBOLS if s != reels[0]])
     return reels
 
 
@@ -122,8 +123,9 @@ def validate_config():
     for outcome in OUTCOMES:
         assert "message" in outcome and outcome["message"], "Each outcome needs a message."
         assert outcome["tone"] in {"positive", "neutral"}, "Unexpected tone value."
-        if outcome["match"] is not None:
-            assert len(outcome["match"]) == 3, "Winning rows must have exactly 3 symbols."
+    for outcome_id, symbol in WIN_SYMBOLS.items():
+        assert outcome_id in {o["id"] for o in OUTCOMES if o["id"] != "lose"}, "Each win symbol needs a matching outcome id."
+        assert symbol in SYMBOLS, "Win symbols must come from SYMBOLS."
 
 
 validate_config()
@@ -132,6 +134,22 @@ init_state()
 st.markdown(
     """
     <style>
+    .stApp {
+        min-height: 100vh;
+    }
+    [data-testid="stAppViewContainer"] > .main {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .page-shell {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
     .stApp {
         background:
             radial-gradient(circle at 18% 0%, rgba(236,72,153,0.18), transparent 28%),
@@ -306,6 +324,7 @@ status_class = "status-positive" if st.session_state.status_tone == "positive" e
 
 st.markdown(
     """
+    <div class="page-shell">
     <div class="hero">
         <div class="big-title">Inverse Cancel Casino</div>
         <div class="tiny-brand">vibe coded by ac-team</div>
@@ -342,4 +361,4 @@ with center:
 
     st.button("🎰 Spin the machine", use_container_width=True, on_click=spin_machine)
 
-st.markdown('<div class="footer-note">AC-team experimental casino interface</div>', unsafe_allow_html=True)
+st.markdown('<div class="footer-note">AC-team experimental casino interface</div></div>', unsafe_allow_html=True)
