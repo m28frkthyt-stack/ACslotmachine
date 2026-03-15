@@ -134,6 +134,25 @@ init_state()
 st.markdown(
     """
     <style>
+html, body, [data-testid="stAppViewContainer"], .stApp {
+    height: 100%;
+}
+[data-testid="stAppViewContainer"] > .main {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+[data-testid="stAppViewContainer"] .block-container {
+    max-width: 900px;
+    width: 100%;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
     .stApp {
         min-height: 100vh;
     }
