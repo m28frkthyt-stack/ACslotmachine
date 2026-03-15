@@ -13,6 +13,7 @@ st.set_page_config(
 # -----------------------------
 SYMBOLS = ["🚗", "🥩", "✈️", "🛢️", "🧴", "🍔", "🌍", "💸", "🚬", "🧢"]
 
+# About 50% losses overall.
 OUTCOMES = [
     {
         "id": "jackpot",
@@ -96,6 +97,20 @@ def init_state():
         if key not in st.session_state:
             st.session_state[key] = value
 
+
+def validate_config():
+    assert any(o["id"] == "lose" for o in OUTCOMES), "A loss outcome is required."
+    assert sum(o["weight"] for o in OUTCOMES) > 0, "Outcome weights must sum to more than 0."
+    loss_weight = sum(o["weight"] for o in OUTCOMES if o["id"] == "lose")
+    total_weight = sum(o["weight"] for o in OUTCOMES)
+    loss_rate = loss_weight / total_weight
+    assert 0.45 <= loss_rate <= 0.55, "Loss probability should stay around 50%."
+    for outcome in OUTCOMES:
+        assert "message" in outcome and outcome["message"], "Each outcome needs a message."
+        assert outcome["tone"] in {"positive", "neutral"}, "Unexpected tone value."
+
+
+validate_config()
 
 # -----------------------------
 # Styling
@@ -217,9 +232,9 @@ st.markdown(
         font-weight: 800;
     }
     .score-grid {
-        display:grid;
+        display: grid;
         grid-template-columns: 1fr;
-        gap:12px;
+        gap: 12px;
         margin: 0.4rem 0 1rem 0;
     }
     .score-pill {
@@ -229,14 +244,14 @@ st.markdown(
         padding: 12px 14px;
         color: #f8fafc;
         font-weight: 700;
-        text-align:center;
+        text-align: center;
     }
     .score-label {
-        font-size:0.78rem;
-        text-transform:uppercase;
-        letter-spacing:0.12em;
-        color:#cbd5e1;
-        margin-bottom:4px;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: #cbd5e1;
+        margin-bottom: 4px;
     }
     .score-big {
         font-size: clamp(1.8rem, 5vw, 2.5rem);
@@ -252,7 +267,7 @@ st.markdown(
         background: linear-gradient(180deg, #ffffff, #e5e7eb);
         color: #111827;
         box-shadow: 0 14px 30px rgba(0,0,0,0.2);
-        width:100%;
+        width: 100%;
     }
     .footer-note {
         text-align: center;
@@ -305,29 +320,25 @@ def spin_machine():
 
     final_reels = build_reels(outcome)
     st.session_state.reels = final_reels
-
-        st.session_state.status = outcome["message"]
+    st.session_state.status = outcome["message"]
     st.session_state.status_tone = outcome["tone"]
 
 
-def reset_game():():
-    for key in ["tokens", "reels", "status", "status_tone", "history", "spins"]:
+def reset_game():
+    for key in ["reels", "status", "status_tone", "spins"]:
         if key in st.session_state:
             del st.session_state[key]
     init_state()
 
 
 # -----------------------------
-# Derived stats
+# Derived state
 # -----------------------------
-total_removed = sum(item["removed"] for item in st.session_state.history)
-jackpots = sum(1 for item in st.session_state.history if item["label"] == "Jackpot")
 status_class = "status-positive" if st.session_state.status_tone == "positive" else "status-neutral"
 
 # -----------------------------
 # UI
 # -----------------------------
-
 st.markdown(
     """
     <div class="hero">
@@ -349,14 +360,12 @@ st.markdown(
         <div class="tiny-brand">vibe coded by ac-team</div>
     </div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
-# Center the slot machine
-left, center, right = st.columns([1,2,1])
+left, center, right = st.columns([1, 2, 1])
 
 with center:
-
     st.markdown(
         f'''
         <div class="machine-shell">
@@ -389,14 +398,12 @@ with center:
             </div>
         </div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
     b1, b2 = st.columns(2)
-
     with b1:
         st.button("🎰 Spin the machine", use_container_width=True, on_click=spin_machine)
-
     with b2:
         st.button("↺ Reset", use_container_width=True, on_click=reset_game)
 
