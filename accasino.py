@@ -20,7 +20,7 @@ OUTCOMES = [
     {
         "id": "jackpot",
         "label": "Jackpot",
-        "weight": 4,
+        "weight": 0.5,
         "dealer_take": 5,
         "message": "JACKPOT. You won. Leave your wager in the machine and GIVE 5 extra cancel tokens to the dealer.",
         "tone": "positive",
@@ -28,7 +28,7 @@ OUTCOMES = [
     {
         "id": "major",
         "label": "Major scandal",
-        "weight": 10,
+        "weight": 2.5,
         "dealer_take": 3,
         "message": "You won. Leave your wager in the machine and GIVE 3 extra cancel tokens to the dealer.",
         "tone": "positive",
@@ -36,7 +36,7 @@ OUTCOMES = [
     {
         "id": "medium",
         "label": "Bad optics",
-        "weight": 16,
+        "weight": 7,
         "dealer_take": 2,
         "message": "You won. Leave your wager in the machine and GIVE 2 extra cancel tokens to the dealer.",
         "tone": "positive",
@@ -44,7 +44,7 @@ OUTCOMES = [
     {
         "id": "minor",
         "label": "Mild controversy",
-        "weight": 20,
+        "weight": 10,
         "dealer_take": 1,
         "message": "You won. Leave your wager in the machine and GIVE 1 extra cancel token to the dealer.",
         "tone": "positive",
@@ -52,7 +52,7 @@ OUTCOMES = [
     {
         "id": "lose",
         "label": "Loss",
-        "weight": 50,
+        "weight": 80,
         "dealer_take": -2,
         "message": "You lost. Take back the 1 token you placed and grab 1 extra token from the dealer. In total, take 2 tokens from the dealer.",
         "tone": "neutral",
